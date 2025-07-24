@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyper NFT Market</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="brand">
+            <h1 id="brand-title">Hyper NFT Market</h1>
+        </div>
+        <div class="header-actions">
+            <nav>
+                <button id="collections-hub-btn" class="button button-secondary">Collections</button>
+                <button id="my-wallet-btn" class="button button-secondary">My Wallet</button>
+            </nav>
+            <div id="wallet-widget">
+                <button id="connect-wallet-btn" class="button">Connect Wallet</button>
+                <div id="wallet-info" class="hidden">
+                    <p><strong>Balance: <span id="user-tap-balance">0.00</span> TAP</strong></p>
+                    <p id="wallet-address-display"></p>
+                    <button id="logout-btn">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div id="status-message" class="hidden"></div>
+        
+        <div id="collections-view">
+            <div style="display: flex; align-items: center; margin-bottom: 1.5rem;">
+                <button id="back-to-collections-btn" class="button-secondary hidden" style="margin-right: 1rem;">← Back</button>
+                <h2 id="view-title" style="margin: 0; text-align: left;">Collections</h2>
+            </div>
+
+            <div class="filters-bar">
+                <div class="form-group">
+                    <input type="checkbox" id="for-sale-filter" name="for-sale-filter" style="vertical-align: middle;">
+                    <label for="for-sale-filter" style="display: inline; margin: 0;">Only For Sale</label>
+                </div>
+
+                <div class="form-group">
+                    <label for="price-sort">Sort by:</label>
+                    <select id="price-sort" name="price-sort">
+                        <option value="default">Default</option>
+                        <option value="price-asc">Price: Low to High</option>
+                        <option value="price-desc">Price: High to Low</option>
+                    </select>
+                </div>
+                
+                <!-- Los filtros de atributos se pueden insertar aquí dinámicamente -->
+                <div id="attribute-filters"></div>
+            </div>
+
+            <div id="collections-grid">
+                <!-- EJEMPLO DE TARJETA MEJORADA (para ser generada por JS) -->
+                <!-- 
+                <div class="card">
+                    <div class="card-image-container">
+                        <img src="https://via.placeholder.com/300" alt="NFT Image">
+                        <button class="like-btn">♡</button>
+                    </div>
+                    <div class="card-info">
+                        <h3>NFT Name #1234</h3>
+                        <p class="collection-name">Awesome Collection</p>
+                        <p class="price">150.00 TAP</p>
+                    </div>
+                </div>
+                -->
+
+                <!-- EJEMPLO DE ESQUELETO DE CARGA (mostrar mientras se cargan los datos) -->
+                <div class="skeleton-card">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text short"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text short"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text short"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text short"></div>
+                </div>
+                <div class="skeleton-card">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text short"></div>
+                </div>
+                 <div class="skeleton-card">
+                    <div class="skeleton-img"></div>
+                    <div class="skeleton-text"></div>
+                    <div class="skeleton-text short"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="my-wallet-view" class="hidden">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h2 style="margin: 0;">My Wallet</h2>
+        <button id="back-to-marketplace-btn-wallet" class="button button-secondary">← Back to Marketplace</button>
+    </div>
+    
+    <!-- SECCIÓN DE MINTING -->
+    <div class="section">
+        <h3>Mint a New NFT</h3>
+        <div class="form-group">
+            <label for="mint-file-input">Select a file to mint</label>
+            <input type="file" id="mint-file-input" style="border:none; padding-left:0;">
+        </div>
+        <button id="mint-nft-btn" class="button">Mint NFT</button>
+    </div>
+
+    <!-- SECCIÓN DE BALANCE Y TRANSACCIONES -->
+    <div class="section">
+        <h3>Balance & Transactions</h3>
+        <p>Marketplace Address for Deposits: <br> <strong id="marketplace-address">Loading...</strong></p>
+        <hr style="margin: 1.5rem 0; border-color: var(--border-color);">
+        <div class="form-group">
+            <label for="withdrawal-amount">Amount to Withdraw (TAP)</label>
+            <input type="text" id="withdrawal-amount" placeholder="e.g. 50.0">
+        </div>
+        <button id="request-withdrawal-btn" class="button">Request Withdrawal</button>
+    </div>
+
+    <!-- SECCIÓN DE CONTENIDO DEL USUARIO (AHORA AL FINAL) -->
+    <div class="section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <h3>My Content</h3>
+            <button id="select-unlisted-btn" class="button-secondary">Select 100 Unlisted</button>
+        </div>
+        <div id="my-nfts-grid"></div>   
+    </div>
+</div>
+    </main>
+
+    <div id="bulk-action-bar" class="hidden"></div>
+
+    <div id="modal-overlay" class="hidden">
+        <div id="modal-content">
+            <button id="modal-close">×</button>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+    
+    <script src="app.js" type="module"></script>
+</body>
+</html>

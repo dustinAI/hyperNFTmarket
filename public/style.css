@@ -1,0 +1,418 @@
+/* --- Variables y Estilos Globales --- */
+:root {
+    --bg-primary: #121212;
+    --bg-secondary: #1E1E1E;
+    --bg-tertiary: #2a2a2a;
+    --bg-overlay: rgba(18, 18, 18, 0.4);
+    --text-primary: #E0E0E0;
+    --text-secondary: #A0A0A0;
+    --accent-color: #BB86FC;
+    --accent-color-dark: #a362ea;
+    --border-color: #333333;
+    --success-color: #03DAC6;
+    --error-color: #CF6679;
+    --shadow-color: rgba(0, 0, 0, 0.25);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+}
+
+main {
+    max-width: 1400px; /* Aumentado para acomodar más tarjetas */
+    margin: 2rem auto;
+    padding: 0 2rem;
+}
+
+h1, h2, h3 {
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-weight: 700;
+}
+
+p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+a {
+    color: var(--accent-color);
+    text-decoration: none;
+}
+
+/* --- Header y Navegación --- */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    box-shadow: 0 4px 12px var(--shadow-color);
+}
+
+header .brand h1 {
+    margin: 0;
+    font-size: 1.8rem;
+    cursor: pointer;
+}
+
+.card.selected {
+    box-shadow: 0 0 0 3px var(--primary-color), 0 8px 20px rgba(0, 122, 255, 0.3);
+    transform: translateY(-4px);
+}
+
+
+#bulk-action-bar {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--background-light);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    z-index: 1000;
+    border: 1px solid var(--border-color);
+}
+.bulk-actions-buttons {
+    display: flex;
+    gap: 1rem;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.header-actions nav {
+    display: flex;
+    gap: 1rem;
+}
+
+#wallet-widget {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#wallet-info p {
+    margin: 0;
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+#wallet-address-display {
+    font-family: monospace;
+    color: var(--text-primary);
+}
+
+/* --- Botones --- */
+.button, button {
+    background-color: var(--accent-color);
+    color: #121212;
+    border: none;
+    padding: 0.7rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.button:hover, button:hover {
+    background-color: var(--accent-color-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.button-secondary {
+    background-color: transparent;
+    color: var(--accent-color);
+    border: 2px solid var(--accent-color);
+}
+
+.button-secondary:hover {
+    background-color: var(--accent-color);
+    color: #121212;
+}
+
+/* --- Cuadrícula y Tarjetas de NFT (v2 - Alta Densidad) --- */
+#collections-grid, #my-nfts-grid {
+    display: grid;
+    /* Cambio clave: tarjetas más pequeñas para mayor densidad */
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid transparent;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px var(--shadow-color);
+    border-color: var(--accent-color);
+}
+
+.card-image-container {
+    position: relative;
+}
+
+.card img {
+    width: 100%;
+    /* Cambio clave: aspecto cuadrado y object-fit para uniformidad */
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    background-color: var(--bg-tertiary);
+    image-rendering: pixelated; /* Mantiene la nitidez en arte pixelado */
+}
+
+.like-btn {
+    position: absolute;
+    top: 0.8rem;
+    right: 0.8rem;
+    background: var(--bg-overlay);
+    backdrop-filter: blur(5px);
+    color: var(--text-primary);
+    border: none;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    padding: 0;
+    opacity: 0; /* Oculto por defecto */
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover .like-btn {
+    opacity: 1; /* Visible en hover */
+}
+
+.like-btn:hover {
+    transform: scale(1.1);
+    color: var(--error-color);
+}
+
+.card-info {
+    padding: 0.8rem; /* Reducido para tarjeta más pequeña */
+}
+
+.card-info h3 {
+    margin: 0 0 0.25rem 0;
+    font-size: 1.05rem; /* Reducido */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.collection-name {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.price {
+    font-size: 1rem; /* Reducido */
+    font-weight: 600;
+    color: var(--success-color);
+}
+
+.nft-card-actions {
+    margin-top: 0.8rem;
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* --- Filtros --- */
+#attribute-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+.attribute-filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.attribute-filter-group label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.attribute-filter-group select {
+    padding: 0.4rem 0.6rem; /* Más compacto */
+    font-size: 0.9rem;
+}
+.filters-bar {
+    background-color: var(--bg-secondary);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    border: 1px solid var(--border-color);
+}
+
+.filters-bar .form-group {
+    margin-bottom: 0;
+}
+
+select {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+/* --- Vista "My Wallet" --- */
+.section {
+    background-color: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-color);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+input[type="text"], input[type="file"] {
+    width: 100%;
+    padding: 0.8rem;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+/* --- Helpers y Clases de Estado --- */
+.hidden {
+    display: none !important;
+}
+
+#status-message {
+    padding: 1rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    text-align: center;
+    font-weight: 600;
+}
+.status-success {
+    background-color: var(--success-color);
+    color: var(--bg-primary);
+}
+.status-error {
+    background-color: var(--error-color);
+    color: var(--bg-primary);
+}
+
+/* --- Esqueleto de Carga (Loading Skeleton) --- */
+@keyframes pulse {
+    0% { background-color: var(--bg-tertiary); }
+    50% { background-color: #383838; }
+    100% { background-color: var(--bg-tertiary); }
+}
+
+.skeleton-card {
+    background-color: var(--bg-secondary);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.skeleton-card .skeleton-img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-card .skeleton-text {
+    height: 1rem;
+    margin: 0.8rem;
+    border-radius: 4px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+.skeleton-card .skeleton-text.short {
+    width: 60%;
+}
+
+
+/* --- Modal --- */
+#modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+#modal-content {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 12px;
+    position: relative;
+    width: 90%;
+    max-width: 500px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 30px var(--shadow-color);
+}
+
+#modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+}
