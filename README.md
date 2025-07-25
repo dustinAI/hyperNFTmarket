@@ -67,7 +67,7 @@ Even though it's not perfect or built with Pear natively, I hope you'll give it 
 
 # How to use BatchMint:
 
-# Open another terminal in your hypernftmarket directory
+# Open a new terminal in your hypernftmarket directory
 Simply add the public folder, like this: cd hypernftmarket/public
 Run the command: node batch_mint.js "C:\your\folder\path\images"
 
