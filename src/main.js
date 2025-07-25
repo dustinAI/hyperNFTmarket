@@ -26,8 +26,8 @@ export async function startApp(storageName) {
     peer_opts.channel = '000000000000000780nftmarketplace';
     // --- FIN DE CAMBIOS ---
     peer_opts.store_name = getStorePath() + '/nftmarketplace';
-    peer_opts.enable_logs = true;
-    peer_opts.enable_txlogs = true;
+    peer_opts.enable_logs = false;
+    peer_opts.enable_txlogs = false;
     
     if (storageName) {
         console.log(`Usando almacenamiento personalizado: ${storageName}`);
