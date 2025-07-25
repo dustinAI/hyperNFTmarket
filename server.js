@@ -278,7 +278,7 @@ server.get('/api/collections', async (req, res) => {
         const { file_id } = req.body;
         if (!file_id) return res.status(400).json({ error: 'file_id is required.' });
 
-        // --- PRE-FLIGHT CHECK: VERIFICAR SALDO ANTES DE COMPRAR ---
+        
         await peer.base.update();
         const buyer_address = peer.wallet.publicKey;
         const listing = await protocol.get(`listings/${file_id}`);
@@ -290,18 +290,35 @@ server.get('/api/collections', async (req, res) => {
         if (buyerBalance < price) {
             return res.status(400).json({ error: 'Insufficient Funds', details: 'Your balance is not enough to purchase this NFT.' });
         }
-        // --- FIN DEL CHEQUEO ---
+        
+        const commandForSigning = {
+            file_id: file_id
+        };
+        const nonce = protocol.generateNonce();
+        const messageToSign = JSON.stringify(commandForSigning) + nonce;
+        const signature = peer.wallet.sign(messageToSign);
 
-        const command = { op: 'buy', file_id };
-        await protocol._transact(command);
+        const commandWithSignature = {
+            op: 'buy',
+            ...commandForSigning,
+            signature_data: {
+                signature: signature,
+                nonce: nonce,
+                from_address: buyer_address
+            }
+        };
+        
+
+        await protocol._transact(commandWithSignature);
         res.json({ success: true, message: 'Purchase transaction submitted.' });
+
     } catch (e) {
         console.error('[API /api/actions/buy] ERROR:', e);
         res.status(500).json({ error: 'Failed to process purchase', details: e.message });
     }
-});
+    });
 
-    // Acción para listar un NFT
+    
     server.post('/api/actions/list', async (req, res) => {
     if (!isPeerReadyForQueries) return res.status(503).json({ error: 'P2P server is not ready yet.' });
     try {
