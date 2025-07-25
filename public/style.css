@@ -123,6 +123,26 @@ header .brand h1 {
     color: var(--text-primary);
 }
 
+.card-image-container {
+    position: relative; /* Necesario para posicionar la medalla */
+}
+
+.rarity-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: rgba(26, 26, 26, 0.8);
+    backdrop-filter: blur(5px);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 2;
+}
+
 /* --- Botones --- */
 .button, button {
     background-color: var(--accent-color);

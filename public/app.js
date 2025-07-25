@@ -206,7 +206,7 @@ function renderNftCard(data, gridElement, context) {
         updateBulkActionBar(); // Actualizar la barra de acciones
     });
     
-    const { file_id, filename, name, price, seller_address, collection_name } = data;
+    const { file_id, filename, name, price, seller_address, collection_name, rarity_rank } = data;
 
     const displayName = name || filename || `NFT-${file_id.substring(0,8)}`;
     const displayCollectionName = collection_name || (context === 'collection' ? UIElements.viewTitle.textContent : 'Community');
@@ -216,14 +216,14 @@ function renderNftCard(data, gridElement, context) {
     card.innerHTML = `
         <div class="card-image-container">
             <img src="/api/nft-image/${file_id}" alt="${displayName}" loading="lazy">
+            ${rarity_rank ? `<div class="rarity-badge">#${rarity_rank}</div>` : ''} 
             <button class="like-btn">♡</button>
         </div>
         <div class="card-info">
             <p class="collection-name">${displayCollectionName}</p>
             <h3>${displayName}</h3>
             <div class="card-footer">
-                <!-- El contenido se añadirá aquí abajo -->
-            </div>
+                </div>
         </div>
     `;
 
