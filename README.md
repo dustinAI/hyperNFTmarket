@@ -65,6 +65,16 @@ I'm not a professional developer — I'm an NFT artist — but I built this with
 
 Even though it's not perfect or built with Pear natively, I hope you'll give it a try and see the vision behind it.
 
+# How to use BatchMint:
+
+# Open another terminal in your hypernftmarket directory
+Simply add the public folder, like this: cd hypernftmarket/public
+Run the command: node batch_mint.js "C:\your\folder\path\images"
+
+# In the images folder, place all the images you want to upload.
+Our batch system is intelligent. The most common error is usually lack of validators. It will attempt to upload all files, and if any are missing, simply restart the batch minter - it will complete the task. If you want to stop it, just use Ctrl+C. If you restart it, it will continue where it left off. It's that simple!
+For any questions, see you on Discord!
+
 ## 🤝 Contributions
 
 If you have any questions or improvements, feel free to open an issue or pull request — your support means a lot.
