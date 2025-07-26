@@ -191,10 +191,8 @@ function renderNftCard(data, gridElement, context) {
         card.classList.add('selected');
     }
 
-    
     card.dataset.fileId = data.file_id;
 
-    
     card.addEventListener('click', () => {
         if (appState.selectedItems.has(data.file_id)) {
             appState.selectedItems.delete(data.file_id);
@@ -203,16 +201,16 @@ function renderNftCard(data, gridElement, context) {
             appState.selectedItems.add(data.file_id);
             card.classList.add('selected');
         }
-        updateBulkActionBar(); // Actualizar la barra de acciones
+        updateBulkActionBar();
     });
-    
+
     const { file_id, filename, name, price, seller_address, collection_name, rarity_rank } = data;
 
     const displayName = name || filename || `NFT-${file_id.substring(0,8)}`;
     const displayCollectionName = collection_name || (context === 'collection' ? UIElements.viewTitle.textContent : 'Community');
     const isListed = !!price && parseFloat(price) > 0;
     const isOwner = appState.wallet && seller_address && seller_address.toLowerCase() === appState.wallet.publicKey.toLowerCase();
-    
+
     card.innerHTML = `
         <div class="card-image-container">
             <img src="/api/nft-image/${file_id}" alt="${displayName}" loading="lazy">
@@ -223,48 +221,47 @@ function renderNftCard(data, gridElement, context) {
             <p class="collection-name">${displayCollectionName}</p>
             <h3>${displayName}</h3>
             <div class="card-footer">
-                </div>
+            </div>
         </div>
     `;
 
     const footer = card.querySelector('.card-footer');
-    
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.gap = '0.5rem';
+
+    // --- INICIO DE LA LÓGICA MEJORADA ---
+
     if (isListed) {
+        // Siempre mostrar el precio si está en venta
         const priceElement = document.createElement('p');
         priceElement.className = 'price';
         priceElement.textContent = `${parseFloat(price).toFixed(2)} TAP`;
         footer.appendChild(priceElement);
 
-        if (!isOwner && appState.wallet) {
+        if (isOwner && appState.wallet) {
+            // Si SOY el dueño, mostrar el botón de Delist (en cualquier vista)
+            const delistBtn = document.createElement('button');
+            delistBtn.className = 'button-secondary';
+            delistBtn.textContent = 'Delist';
+            delistBtn.onclick = (e) => { e.stopPropagation(); handleDelist(file_id); };
+            buttonContainer.appendChild(delistBtn);
+        } else if (!isOwner && appState.wallet) {
+            // Si NO SOY el dueño, mostrar el botón de Buy
             const buyBtn = document.createElement('button');
             buyBtn.className = 'button';
             buyBtn.textContent = 'Buy';
             buyBtn.onclick = (e) => { e.stopPropagation(); handleBuy(file_id); };
-            footer.appendChild(buyBtn);
+            buttonContainer.appendChild(buyBtn);
         }
-    }
-
-    // Lógica de botones para el propietario (ya sea listado o no)
-    if (context === 'wallet' && isOwner) {
-    const buttonContainer = document.createElement('div');
-    buttonContainer.style.display = 'flex';
-    buttonContainer.style.gap = '0.5rem';
-    
-    if (isListed) {
-        // Si está listado, solo mostramos el botón "Delist"
-        const delistBtn = document.createElement('button');
-        delistBtn.className = 'button-secondary';
-        delistBtn.textContent = 'Delist';
-        delistBtn.onclick = (e) => { e.stopPropagation(); handleDelist(file_id); };
-        buttonContainer.appendChild(delistBtn);
-    } else {
-        // Si NO está listado, mostramos "List" y "Send"
+    } else if (isOwner && context === 'wallet') {
+        // Si NO está en venta, y SOY el dueño, y estoy en MI WALLET, mostrar List y Send
         const listBtn = document.createElement('button');
         listBtn.className = 'button';
         listBtn.textContent = 'List';
         listBtn.onclick = (e) => { e.stopPropagation(); handleList(file_id); };
         buttonContainer.appendChild(listBtn);
-        
+
         const transferBtn = document.createElement('button');
         transferBtn.className = 'button-secondary';
         transferBtn.textContent = 'Send';
@@ -272,9 +269,12 @@ function renderNftCard(data, gridElement, context) {
         buttonContainer.appendChild(transferBtn);
     }
 
-    footer.appendChild(buttonContainer);
-}
-    
+    if (buttonContainer.hasChildNodes()) {
+        footer.appendChild(buttonContainer);
+    }
+
+    // --- FIN DE LA LÓGICA MEJORADA ---
+
     const likeBtn = card.querySelector('.like-btn');
     likeBtn.onclick = (e) => {
         e.stopPropagation();
@@ -543,7 +543,7 @@ async function handleBulkList() {
             console.error(`Failed to list ${file_id}:`, e);
             errorCount++;
         }
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa de 1 segundo
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Pausa de 1 segundo
     }
     
     showAutoCloseModal(`Bulk Listing Complete: ${successCount} successful, ${errorCount} failed/skipped.`);
@@ -575,7 +575,7 @@ async function handleBulkDelist() {
             console.error(`Failed to delist ${file_id}:`, e);
             errorCount++;
         }
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Pausa de 1 segundo
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Pausa de 1 segundo
     }
 
     showAutoCloseModal(`Bulk Delist Complete: ${successCount} successful, ${errorCount} failed/skipped.`);
@@ -611,7 +611,7 @@ async function handleBulkBuy() {
     
     for (const nft of nftsToPurchase) {
         try {
-            // --- CHEQUEO DE SALDO INDIVIDUAL ANTES DE CADA COMPRA ---
+           
             await refreshWalletData(); // Actualiza el balance a su último estado
             if (parseFloat(appState.balance) < parseFloat(nft.price)) {
                 console.error(`Purchase of ${nft.file_id} skipped: Insufficient funds for this item.`);
@@ -621,19 +621,19 @@ async function handleBulkBuy() {
             
             await api.buyNft(nft.file_id);
             successCount++;
-            // El balance se irá actualizando en la siguiente iteración con `refreshWalletData`
+            
 
         } catch (e) {
             console.error(`Failed to buy ${nft.file_id}:`, e);
             errorCount++;
         }
-        // --- PAUSA DE 3 SEGUNDOS ---
+        
         await new Promise(resolve => setTimeout(resolve, 3000));
     }
 
     showAutoCloseModal(`Bulk Purchase Complete: ${successCount} successful, ${errorCount} failed/skipped.`);
     clearSelection();
-    // Recargar la vista actual para que se actualicen los items
+   
     if (UIElements.viewTitle.textContent === "Community Market") {
         await renderCommunityListingsView();
     } else {
