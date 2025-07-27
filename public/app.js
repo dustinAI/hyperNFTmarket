@@ -1,6 +1,6 @@
+// --- Lógica de app.js totalmente refactorizada y completa ---
 
-
-
+// --- DOM Element References ---
 const UIElements = {
     brandTitle: document.getElementById('brand-title'),
     walletWidget: document.getElementById('wallet-widget'),
@@ -28,16 +28,16 @@ const UIElements = {
     marketplaceAddress: document.getElementById('marketplace-address'),
     requestWithdrawalBtn: document.getElementById('request-withdrawal-btn'),
     collectionsHubBtn: document.getElementById('collections-hub-btn'),
-    communityMarketBtn: document.getElementById('my-wallet-btn'), 
+    communityMarketBtn: document.getElementById('my-wallet-btn'), // Usamos el mismo botón de "My Wallet" del header
     forSaleFilter: document.getElementById('for-sale-filter'),
     priceSort: document.getElementById('price-sort'),
     attributeFilters: document.getElementById('attribute-filters'),
     withdrawalAmountInput: document.getElementById('withdrawal-amount'),
-    filtersContainer: document.querySelector('.filters-bar'), 
+    filtersContainer: document.querySelector('.filters-bar'), // Seleccionado por clase
     statusMessage: document.getElementById('status-message'),
 };
 
-
+// --- Application State ---
 let appState = {
     wallet: null,
     listings: [],
@@ -51,7 +51,7 @@ let appState = {
 
 const API_BASE_URL = window.location.origin;
 
-
+// --- API Object ---
 const api = {
     _get: (endpoint) => fetch(`${API_BASE_URL}${endpoint}`).then(res => res.json()),
     _post: async (endpoint, body) => {
@@ -88,7 +88,7 @@ const api = {
     }
 };
 
-
+// --- UI Logic ---
 function showView(viewName) {
     clearSelection();
     UIElements.collectionsView.classList.add('hidden');
@@ -137,14 +137,14 @@ function showLoading(message) {
 
 function handleApiError(error, context = "An error") {
     console.error(`API Error in ${context}:`, error);
-    modal.close(); 
+    modal.close(); // Cierra el modal de "Loading" si está abierto
     
-    
+    // Muestra un mensaje de error en el #status-message
     UIElements.statusMessage.textContent = `Error: ${error.message}`;
-    UIElements.statusMessage.className = 'status-error'; 
+    UIElements.statusMessage.className = 'status-error'; // Aplica el estilo de error
     UIElements.statusMessage.classList.remove('hidden');
     
-    
+    // Oculta el mensaje después de 5 segundos
     setTimeout(() => {
         UIElements.statusMessage.classList.add('hidden');
     }, 5000);
@@ -166,7 +166,7 @@ async function refreshWalletData() {
 }
 
 function renderSkeletons(count, gridElement) {
-    gridElement.innerHTML = ''; 
+    gridElement.innerHTML = ''; // Limpiar el grid primero
     for (let i = 0; i < count; i++) {
         const skeletonCard = document.createElement('div');
         skeletonCard.className = 'skeleton-card';
@@ -230,24 +230,24 @@ function renderNftCard(data, gridElement, context) {
     buttonContainer.style.display = 'flex';
     buttonContainer.style.gap = '0.5rem';
 
-    
+    // --- INICIO DE LA LÓGICA MEJORADA ---
 
     if (isListed) {
-        
+        // Siempre mostrar el precio si está en venta
         const priceElement = document.createElement('p');
         priceElement.className = 'price';
         priceElement.textContent = `${parseFloat(price).toFixed(2)} TAP`;
         footer.appendChild(priceElement);
 
         if (isOwner && appState.wallet) {
-            
+            // Si SOY el dueño, mostrar el botón de Delist (en cualquier vista)
             const delistBtn = document.createElement('button');
             delistBtn.className = 'button-secondary';
             delistBtn.textContent = 'Delist';
             delistBtn.onclick = (e) => { e.stopPropagation(); handleDelist(file_id); };
             buttonContainer.appendChild(delistBtn);
         } else if (!isOwner && appState.wallet) {
-            
+            // Si NO SOY el dueño, mostrar el botón de Buy
             const buyBtn = document.createElement('button');
             buyBtn.className = 'button';
             buyBtn.textContent = 'Buy';
@@ -255,7 +255,7 @@ function renderNftCard(data, gridElement, context) {
             buttonContainer.appendChild(buyBtn);
         }
     } else if (isOwner && context === 'wallet') {
-        
+        // Si NO está en venta, y SOY el dueño, y estoy en MI WALLET, mostrar List y Send
         const listBtn = document.createElement('button');
         listBtn.className = 'button';
         listBtn.textContent = 'List';
@@ -273,7 +273,7 @@ function renderNftCard(data, gridElement, context) {
         footer.appendChild(buttonContainer);
     }
 
-    
+    // --- FIN DE LA LÓGICA MEJORADA ---
 
     const likeBtn = card.querySelector('.like-btn');
     likeBtn.onclick = (e) => {
@@ -298,16 +298,17 @@ async function renderCollectionsHub() {
         const [curated, network, communityListings] = await Promise.all([
             api.getCuratedCollections(),
             api.getNetworkCollections(),
-            api.getListings() 
+            api.getListings() // Obtenemos los listings de la comunidad
         ]);
         
         UIElements.collectionsGrid.innerHTML = '';
         
-        
+        // --- INICIO DE LA MODIFICACIÓN: Tarjeta de Comunidad ---
+        // Creamos la tarjeta para la comunidad primero.
         const communityCard = document.createElement('div');
         communityCard.className = 'card';
         communityCard.style.cursor = 'pointer';
-        
+        // Asumimos que tienes una imagen en `/collections/comunidad.png` o similar
         communityCard.innerHTML = `
             <div class="card-image-container">
                 <img src="/collections/comunidad.png" alt="Community Market">
@@ -319,7 +320,7 @@ async function renderCollectionsHub() {
         `;
         communityCard.onclick = () => renderCommunityListingsView();
         UIElements.collectionsGrid.appendChild(communityCard);
-        
+        // --- FIN DE LA MODIFICACIÓN ---
 
         const allApiCollections = [...(curated || []), ...(network || [])];
 
@@ -378,7 +379,7 @@ async function renderCollectionView(collectionId, collectionType) {
         
         appState.currentCollectionData = (collectionItems || []).map(nft => ({
             ...nft,
-            collection_name: collectionData.name, 
+            collection_name: collectionData.name, // Añadimos el nombre de la colección a cada NFT
             ...listingsMap.get(nft.file_id)
         }));
 
@@ -400,7 +401,7 @@ function updateBulkActionBar() {
     }
 
     let buttons = '';
-    
+    // Determinar qué botones mostrar según la vista actual
     if (appState.currentView === 'my-wallet') {
         buttons = `
             <button id="bulk-list-btn" class="button">List ${count} items</button>
@@ -417,7 +418,7 @@ function updateBulkActionBar() {
     `;
     UIElements.bulkActionBar.classList.remove('hidden');
 
-    
+    // Asignar eventos a los botones recién creados
     const bulkClearBtn = document.getElementById('bulk-clear-selection');
     if (bulkClearBtn) bulkClearBtn.addEventListener('click', clearSelection);
 
@@ -433,7 +434,7 @@ function updateBulkActionBar() {
 
 function clearSelection() {
     appState.selectedItems.clear();
-    
+    // Eliminar la clase .selected de todas las tarjetas visibles
     document.querySelectorAll('.card.selected').forEach(card => card.classList.remove('selected'));
     updateBulkActionBar();
 }
@@ -441,9 +442,9 @@ function clearSelection() {
 async function renderCommunityListingsView() {
     showView('collections');
     UIElements.viewTitle.textContent = "Community Market";
-    UIElements.backToCollectionsBtn.classList.remove('hidden'); 
+    UIElements.backToCollectionsBtn.classList.remove('hidden'); // Botón para volver al hub
     
-    
+    // Habilitar filtros de venta y precio, pero no de atributos
     UIElements.filtersContainer.classList.remove('hidden');
     UIElements.attributeFilters.innerHTML = '';
     appState.activeFilters = {};
@@ -486,7 +487,7 @@ async function renderMyWalletView() {
     }
     showView('my-wallet');
     
-    
+    // Limpiar filtros y mostrar esqueletos
     appState.activeFilters = {};
     UIElements.attributeFilters.innerHTML = '';
     renderSkeletons(4, UIElements.myNftsGrid); 
@@ -507,14 +508,14 @@ async function renderMyWalletView() {
         UIElements.myNftsGrid.innerHTML = '<p>You do not own any NFTs. Mint your first one below!</p>';
     } else {
         for (const nft of appState.myNfts) {
-            
+            // Pasamos el contexto 'wallet' para que renderNftCard sepa cómo actuar
             renderNftCard(nft, UIElements.myNftsGrid, 'wallet');
         }
     }
 }
 
 
-
+// --- Action Handlers ---
 async function handleBulkList() {
     const price = prompt("Enter a single price for all selected NFTs:", "1.0");
     if (price === null || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
@@ -529,20 +530,20 @@ async function handleBulkList() {
 
     for (const file_id of itemsToList) {
         try {
-           
+            // Filtrar para solo listar los que no tienen precio (no están ya listados)
             const nftData = appState.myNfts.find(nft => nft.file_id === file_id);
             if (nftData && !nftData.price) {
                 await api.listNft(file_id, price);
                 successCount++;
             } else {
                 console.log(`Item ${file_id} is already listed, skipping.`);
-                errorCount++; 
+                errorCount++; // Contar como error si ya está listado
             }
         } catch (e) {
             console.error(`Failed to list ${file_id}:`, e);
             errorCount++;
         }
-        await new Promise(resolve => setTimeout(resolve, 10000)); 
+        await new Promise(resolve => setTimeout(resolve, 8000)); // Pausa de 1 segundo
     }
     
     showAutoCloseModal(`Bulk Listing Complete: ${successCount} successful, ${errorCount} failed/skipped.`);
@@ -561,7 +562,7 @@ async function handleBulkDelist() {
 
     for (const file_id of itemsToDelist) {
         try {
-            
+            // Filtrar para solo retirar los que sí tienen precio (están listados)
             const nftData = appState.myNfts.find(nft => nft.file_id === file_id);
             if (nftData && nftData.price) {
                  await api.delistNft(file_id);
@@ -574,7 +575,7 @@ async function handleBulkDelist() {
             console.error(`Failed to delist ${file_id}:`, e);
             errorCount++;
         }
-        await new Promise(resolve => setTimeout(resolve, 10000)); 
+        await new Promise(resolve => setTimeout(resolve, 8000)); // Pausa de 1 segundo
     }
 
     showAutoCloseModal(`Bulk Delist Complete: ${successCount} successful, ${errorCount} failed/skipped.`);
@@ -585,7 +586,7 @@ async function handleBulkDelist() {
 async function handleBulkBuy() {
     const itemsToBuy = Array.from(appState.selectedItems);
     const nftsToPurchase = appState.currentCollectionData.filter(nft => 
-        itemsToBuy.includes(nft.file_id) && nft.price 
+        itemsToBuy.includes(nft.file_id) && nft.price // Asegurarse de que tienen precio
     );
 
     if (nftsToPurchase.length !== itemsToBuy.length) {
@@ -595,7 +596,7 @@ async function handleBulkBuy() {
         return;
     }
 
-    
+    // --- PRE-CHEQUEO DE SALDO TOTAL ---
     const totalCost = nftsToPurchase.reduce((sum, nft) => sum + parseFloat(nft.price), 0);
     if (parseFloat(appState.balance) < totalCost) {
         return alert(`Insufficient funds. You need ${totalCost.toFixed(2)} TAP, but you only have ${appState.balance}.`);
@@ -611,11 +612,11 @@ async function handleBulkBuy() {
     for (const nft of nftsToPurchase) {
         try {
            
-            await refreshWalletData(); 
+            await refreshWalletData(); // Actualiza el balance a su último estado
             if (parseFloat(appState.balance) < parseFloat(nft.price)) {
                 console.error(`Purchase of ${nft.file_id} skipped: Insufficient funds for this item.`);
                 errorCount++;
-                continue; 
+                continue; // Saltar al siguiente item
             }
             
             await api.buyNft(nft.file_id);
@@ -627,7 +628,7 @@ async function handleBulkBuy() {
             errorCount++;
         }
         
-        await new Promise(resolve => setTimeout(resolve, 12000));
+        await new Promise(resolve => setTimeout(resolve, 9000));
     }
 
     showAutoCloseModal(`Bulk Purchase Complete: ${successCount} successful, ${errorCount} failed/skipped.`);
@@ -636,23 +637,23 @@ async function handleBulkBuy() {
     if (UIElements.viewTitle.textContent === "Community Market") {
         await renderCommunityListingsView();
     } else {
-        await renderCollectionsHub(); 
+        await renderCollectionsHub(); // Volver al hub como fallback seguro
     }
 }
 
 function handleSelectUnlisted() {
     if (appState.currentView !== 'my-wallet') return;
 
-    
+    // 1. Filtrar para obtener solo los NFTs que no están a la venta.
     const unlistedNfts = appState.myNfts.filter(nft => !nft.price || parseFloat(nft.price) <= 0);
 
-    
+    // 2. Mezclar el array de forma aleatoria (algoritmo Fisher-Yates) para que la selección sea al azar.
     for (let i = unlistedNfts.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [unlistedNfts[i], unlistedNfts[j]] = [unlistedNfts[j], unlistedNfts[i]];
     }
     
-    
+    // 3. Tomar los primeros 100 (o menos si no hay tantos).
     const itemsToSelect = unlistedNfts.slice(0, 100);
 
     if (itemsToSelect.length === 0) {
@@ -660,11 +661,11 @@ function handleSelectUnlisted() {
         return;
     }
 
-    
+    // 4. Limpiar la selección anterior y agregar los nuevos items.
     clearSelection();
     itemsToSelect.forEach(nft => appState.selectedItems.add(nft.file_id));
 
-    
+    // 5. Actualizar la UI para mostrar visualmente la selección.
     itemsToSelect.forEach(nft => {
         const card = document.querySelector(`.card[data-file-id="${nft.file_id}"]`);
         if (card) {
@@ -672,7 +673,7 @@ function handleSelectUnlisted() {
         }
     });
 
-    
+    // 6. Mostrar la barra de acciones.
     updateBulkActionBar();
 }
 
@@ -685,7 +686,7 @@ async function handleList(file_id) {
     try {
         await api.listNft(file_id, price);
         showAutoCloseModal('NFT listed for sale successfully!');
-        
+        // --- CAMBIO CLAVE: Nos quedamos en la vista de la wallet ---
         await renderMyWalletView(); 
     } catch (e) { handleApiError(e, "listing NFT"); }
 }
@@ -697,19 +698,22 @@ async function handleDelist(file_id) {
         await api.delistNft(file_id);
         showAutoCloseModal('NFT successfully delisted!');
 
-        
+        // --- LÓGICA DE REFRESCO MEJORADA ---
         if (appState.currentView === 'wallet') {
-            
+            // Si estamos en la wallet, simplemente recargamos la wallet
             await renderMyWalletView();
         } else {
-            
+            // Si estamos en una vista de colección, la recargamos.
+            // Asumimos que la vista de colección activa se mantiene y la recargamos
+            // Esta es una simplificación; un estado más robusto guardaría el ID y tipo de la colección activa.
+            // Por ahora, recargar la vista actual de colecciones debería funcionar si el usuario no ha navegado.
             const currentCollectionTitle = UIElements.viewTitle.textContent;
             const activeCollection = appState.currentCollectionData.find(c => c.name === currentCollectionTitle);
             
             if (activeCollection) {
                 await renderCollectionView(activeCollection.id || activeCollection.name, activeCollection.type);
             } else {
-                
+                // Si no podemos determinar la colección, volvemos al hub como fallback seguro.
                 await renderCollectionsHub();
             }
         }
@@ -725,15 +729,20 @@ async function handleBuy(file_id) {
         await api.buyNft(file_id);
         showAutoCloseModal('Purchase successful! The NFT will now appear in your wallet.');
         
-        await refreshWalletData(); 
+        await refreshWalletData(); // Actualiza el balance y los NFTs del usuario en segundo plano
 
-        
+        // --- LÓGICA DE REFRESCO MEJORADA ---
+        // Recargamos la vista actual para que el item comprado desaparezca de la lista de venta.
+        // Esto asume que la vista de colección o comunidad sigue activa.
         const currentCollectionTitle = UIElements.viewTitle.textContent;
         
         if (currentCollectionTitle === "Community Market") {
             await renderCommunityListingsView();
         } else {
-             
+             // Esta es una solución simple. Una app más compleja guardaría el ID de la colección activa en appState.
+             // Por ahora, recargar el hub es la opción más segura si no podemos identificar la colección.
+             // El problema con `renderCollectionView` es que necesita el `collectionType` que no guardamos.
+             // Así que el fallback seguro es ir al hub.
             await renderCollectionsHub();
         }
 
@@ -750,7 +759,7 @@ async function handleTransfer(file_id) {
     try {
         await api.transferNft(file_id, to_address);
         showAutoCloseModal('NFT transferred successfully!');
-        
+        // --- CAMBIO CLAVE: Nos quedamos en la vista de la wallet ---
         await renderMyWalletView(); 
     } catch (e) {
         handleApiError(e, "transferring NFT");
@@ -771,7 +780,7 @@ async function handleMint() {
     } catch(e) { handleApiError(e, "minting NFT"); } 
 }
 
-
+// --- Connection & Initialization ---
 function logout() {
     appState.wallet = null;
     appState.myNfts = [];
@@ -895,7 +904,7 @@ function init() {
     UIElements.brandTitle.addEventListener('click', renderCollectionsHub);
     UIElements.collectionsHubBtn.addEventListener('click', renderCollectionsHub);
     
-    
+    // El botón de "My Wallet" del header ahora es el único que lleva a esa vista.
     UIElements.myWalletBtn.addEventListener('click', renderMyWalletView);
     
     UIElements.connectWalletBtn.addEventListener('click', connectToPeerWallet);
