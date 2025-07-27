@@ -543,7 +543,7 @@ async function handleBulkList() {
             console.error(`Failed to list ${file_id}:`, e);
             errorCount++;
         }
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Pausa de 1 segundo
+        await new Promise(resolve => setTimeout(resolve, 6000)); // Pausa de 6 segundo
     }
     
     showAutoCloseModal(`Bulk Listing Complete: ${successCount} successful, ${errorCount} failed/skipped.`);
@@ -575,7 +575,7 @@ async function handleBulkDelist() {
             console.error(`Failed to delist ${file_id}:`, e);
             errorCount++;
         }
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Pausa de 1 segundo
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Pausa de 5 segundo
     }
 
     showAutoCloseModal(`Bulk Delist Complete: ${successCount} successful, ${errorCount} failed/skipped.`);
@@ -628,7 +628,7 @@ async function handleBulkBuy() {
             errorCount++;
         }
         
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 6000));
     }
 
     showAutoCloseModal(`Bulk Purchase Complete: ${successCount} successful, ${errorCount} failed/skipped.`);
