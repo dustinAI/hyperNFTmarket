@@ -1,4 +1,4 @@
-// --- START OF FILE batch_mint.js ---
+
 
 import fs from 'fs/promises';
 import path from 'path';
@@ -147,4 +147,4 @@ async function main() {
 
 main();
 
-// --- END OF FILE batch_mint.js ---
+
