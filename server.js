@@ -10,7 +10,7 @@ import readline from 'readline';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-
+// --- Global Error Handlers ---
 process.on('unhandledRejection', (reason, promise) => { console.error('FATAL Unhandled Rejection:', reason, promise); });
 process.on('uncaughtException', (error) => { console.error('FATAL Uncaught Exception:', error); process.exit(1); });
 
@@ -34,7 +34,7 @@ async function getCuratedNftMetadataCache() {
                         }
                     }
                 } catch (e) {
-                    
+                    // Ignorar carpetas sin JSON o con errores
                 }
             }
         }
@@ -121,7 +121,7 @@ async function main() {
         res.json(collectionsData);
     } catch (e) {
         console.error('[API /api/curated-collections] Error:', e);
-        res.status(500).json([]); 
+        res.status(500).json([]); // Devolver array vacío en caso de error
     }
 });
 server.get('/api/curated-collections/:collectionName', async (req, res) => {
@@ -129,17 +129,17 @@ server.get('/api/curated-collections/:collectionName', async (req, res) => {
     try {
         const { collectionName } = req.params;
         
-        
+        // Medida de seguridad para evitar que se acceda a directorios no deseados.
         if (!collectionName || collectionName.includes('..')) {
             return res.status(400).json({ error: 'Invalid collection name.' });
         }
 
         const filePath = path.join(__dirname, 'public', 'collections', collectionName, 'metadata_con_rareza.json');
 
-        
+        // Leer el archivo de metadatos de la colección.
         const fileContent = await fs.readFile(filePath, 'utf-8');
         
-        
+        // Devolver el contenido del archivo JSON directamente.
         res.setHeader('Content-Type', 'application/json');
         res.send(fileContent);
 
@@ -193,7 +193,7 @@ server.get('/api/collections', async (req, res) => {
         res.json(allCollections);
     } catch (e) {
         console.error('[API /api/collections] ERROR:', e);
-        res.status(500).json([]); 
+        res.status(500).json([]); // Devolver array vacío en caso de error
     }
 });
     server.get('/api/get-wallet-info', (req, res) => {
@@ -320,25 +320,51 @@ server.get('/api/collections', async (req, res) => {
 
     
     server.post('/api/actions/list', async (req, res) => {
-    if (!isPeerReadyForQueries) return res.status(503).json({ error: 'P2P server is not ready yet.' });
     try {
         const { file_id, price } = req.body;
-        if (!file_id || !price) return res.status(400).json({ error: 'file_id and price are required.' });
+        if (!file_id || !price) {
+            return res.status(400).json({ error: 'file_id and price are required.' });
+        }
 
+        await peer.base.update();
+
+        // Verificación 1: ¿Existe el NFT? (Sigue siendo una buena primera barrera)
+        const metadata = await protocol.get(`file_meta/${file_id}`);
+        if (!metadata) {
+            console.error(`[Pre-Flight Failed] Attempted to list non-existent File ID: ${file_id}`);
+            return res.status(404).json({
+                error: 'NFT Not Found',
+                details: `The File ID ${file_id} does not exist on the network.`
+            });
+        }
+
+        // --- INICIO DE LA NUEVA VERIFICACIÓN DE PROPIEDAD ---
+        // Verificación 2: ¿El wallet del servidor es el propietario de este NFT?
+        const serverWalletAddress = peer.wallet.publicKey;
+        const ownedNftIds = await protocol.get(`user_nfts/${serverWalletAddress}`) || [];
         
-        await peer.base.update(); // Sincronizar con el estado más reciente
-        const existingListing = await protocol.get(`listings/${file_id}`);
+        if (!ownedNftIds.includes(file_id)) {
+            // Si la lista de NFTs del servidor no incluye este file_id, no tiene permiso para venderlo.
+            console.error(`[Pre-Flight Failed] Wallet ${serverWalletAddress.substring(0, 10)}... attempted to list NFT ${file_id.substring(0, 10)}... which it does not own.`);
+            // Usamos el código 403 Forbidden, que es el estándar para errores de permisos.
+            return res.status(403).json({
+                error: 'Permission Denied',
+                details: 'The server wallet is not the current owner of this NFT and cannot list it for sale.'
+            });
+        }
+        // --- FIN DE LA NUEVA VERIFICACIÓN DE PROPIEDAD ---
 
+        // Verificación 3: ¿Ya está a la venta? (Lógica que ya teníamos)
+        const existingListing = await protocol.get(`listings/${file_id}`);
         if (existingListing) {
-            console.error(`[Pre-Flight Failed] NFT ${file_id} is already listed.`);
-            // Usamos el código de estado 409 Conflict
-            return res.status(409).json({ 
-                error: 'Already Listed', 
-                details: 'This NFT is already for sale. You must delist it first.' 
+            console.warn(`[Pre-Flight Failed] NFT ${file_id} is already listed.`);
+            return res.status(409).json({
+                error: 'Already Listed',
+                details: 'This NFT is already for sale. You must delist it first.'
             });
         }
         
-        
+        // Si todas las verificaciones pasan, la transacción es segura.
         const command = { 
             op: 'listForSale', 
             file_id: file_id, 
@@ -347,14 +373,15 @@ server.get('/api/collections', async (req, res) => {
         };
         await protocol._transact(command);
 
-        res.json({ success: true, message: 'List transaction submitted.' });
+        res.json({ success: true, message: 'List transaction submitted successfully.' });
+
     } catch (e) {
-        console.error('[API /api/actions/list] ERROR:', e);
-        res.status(500).json({ error: 'Failed to process listing', details: e.message });
+        console.error('[API /api/actions/list] UNEXPECTED ERROR:', e);
+        res.status(500).json({ error: 'Failed to process listing due to an internal server error.', details: e.message });
     }
 });
 
-    
+    // Acción para retirar un NFT de la venta
     server.post('/api/actions/delist', async (req, res) => {
         if (!isPeerReadyForQueries) return res.status(503).json({ error: 'P2P server is not ready yet.' });
         try {
@@ -371,7 +398,7 @@ server.get('/api/collections', async (req, res) => {
         }
     });
 
-    
+    // Acción para transferir un NFT
     server.post('/api/actions/transfer', async (req, res) => {
         if (!isPeerReadyForQueries) return res.status(503).json({ error: 'P2P server is not ready yet.' });
         try {
@@ -399,15 +426,17 @@ server.get('/api/collections', async (req, res) => {
     try {
         const owner_address = peer.wallet.publicKey;
 
-        
+        // --- PUNTO CRÍTICO DE REVISIÓN ---
+        // Asegúrate de que la función que se llama aquí es "mintNFTAsOperator".
+        // Esta es la función correcta que devuelve un objeto con { file_id, filename }.
         const result = await protocol.mintNFTAsOperator(tempFilePath, owner_address);
         
-        
+        // Se añade una verificación para mayor seguridad.
         if (!result) {
             throw new Error("Minting function did not return the expected result object.");
         }
 
-        
+        // Ahora esta línea es segura porque 'result' es un objeto válido.
         const { file_id, filename } = result;
 
         const logEntry = {
@@ -443,7 +472,7 @@ server.get('/api/collections', async (req, res) => {
 
         const user_address = peer.wallet.publicKey;
         
-        
+        // Chequeo pre-vuelo del saldo (esto ya lo teníamos y es correcto)
         await peer.base.update();
         const withdrawalAmountBigInt = protocol.safeBigInt(protocol.toBigIntString(amount, 18));
         const userBalanceBigInt = protocol.safeBigInt(await protocol.get(`internal_balances/${user_address}`, '0'));
@@ -451,23 +480,23 @@ server.get('/api/collections', async (req, res) => {
              return res.status(400).json({ error: 'Insufficient Funds', details: 'Your balance is not enough for this withdrawal.' });
         }
 
-       
+        // --- INICIO DE LA CORRECCIÓN: CONSTRUIR LA FIRMA ---
 
-        
+        // 1. Crear el objeto de datos que se va a firmar (sin 'op').
         const commandForSigning = {
             amount: protocol.toBigIntString(amount, 18)
         };
 
-        
+        // 2. Generar un nonce (número único) para la firma.
         const nonce = protocol.generateNonce();
         
-        
+        // 3. Crear el mensaje a firmar, exactamente como el contrato espera.
         const messageToSign = JSON.stringify(commandForSigning) + nonce;
 
-        
+        // 4. Firmar el mensaje con la clave secreta del peer.
         const signature = peer.wallet.sign(messageToSign);
 
-        
+        // 5. Construir el comando final para la transacción, incluyendo 'signature_data'.
         const commandWithSignature = {
             op: 'requestWithdrawal',
             ...commandForSigning,
@@ -491,7 +520,7 @@ server.get('/api/collections', async (req, res) => {
     server.get('/api/marketplace-address', async (req, res) => {
     if (!isPeerReadyForQueries) return res.status(503).json({ error: 'P2P server is not ready yet.' });
     try {
-        await peer.base.update(); 
+        await peer.base.update(); // Sincronizar para obtener el último estado
         const adminAddress = await protocol.get('admin');
 
         if (adminAddress) {
@@ -507,7 +536,7 @@ server.get('/api/collections', async (req, res) => {
         res.status(500).json({ error: 'Server Error', details: e.message });
     }
 });
-    
+    // El resto de las rutas que no cambian (imágenes, etc.)
     server.get('/api/nft-image/:file_id', async (req, res) => {
     const { file_id } = req.params;
     try {
@@ -522,7 +551,7 @@ server.get('/api/collections', async (req, res) => {
         const fileExtension = path.extname(originalFilename);
         const canonicalCacheFilename = `${file_id}${fileExtension}`;
 
-        
+        // Lógica de caché híbrida (no la modificamos)
         let foundPath = null;
         const collectionDirs = await fs.readdir(collectionsPath);
         for (const dir of collectionDirs) {
@@ -546,7 +575,7 @@ server.get('/api/collections', async (req, res) => {
             return res.redirect(foundPath);
         }
 
-        
+        // Lógica de descarga y renombrado (la clave del éxito)
         console.log(`[Cache Miss] Downloading image for file_id: ${file_id}`);
         const tempDownloadPath = await protocol.downloadNFT(file_id, nftCachePath);
         
@@ -568,7 +597,8 @@ server.get('/api/collections', async (req, res) => {
         const stream = peer.base.view.createReadStream({ gte: 'listings/', lt: 'listings/z' });
         
         for await (const { key, value } of stream) {
-            
+            // Esta versión no tiene el filtro `if (!curatedNftMetadataCache.has(file_id))`
+            // por lo que devuelve TODOS los NFTs en venta.
             if (value) {
                 const file_id = key.split('/')[1];
                 const metadata = await protocol.get(`file_meta/${file_id}`);
