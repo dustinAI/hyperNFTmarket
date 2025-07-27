@@ -9,7 +9,7 @@ import fetch from 'node-fetch';
 // --- CONFIGURACIÓN ---
 // =================================================================
 const API_BASE_URL = 'http://127.0.0.1:3000';
-const DELAY_BETWEEN_MINTS_MS = 4000; // Pausa normal entre archivos exitosos.
+const DELAY_BETWEEN_MINTS_MS = 12000; // Pausa normal entre archivos exitosos.
 
 // --- NUEVA CONFIGURACIÓN DE REINTENTOS ---
 // Máximo de veces que el script intentará subir un MISMO archivo si falla.
