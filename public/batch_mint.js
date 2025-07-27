@@ -5,21 +5,18 @@ import path from 'path';
 import FormData from 'form-data';
 import fetch from 'node-fetch';
 
-// =================================================================
-// --- CONFIGURACIÓN ---
-// =================================================================
-const API_BASE_URL = 'http://127.0.0.1:3000';
-const DELAY_BETWEEN_MINTS_MS = 12000; // Pausa normal entre archivos exitosos.
 
-// --- NUEVA CONFIGURACIÓN DE REINTENTOS ---
-// Máximo de veces que el script intentará subir un MISMO archivo si falla.
+const API_BASE_URL = 'http://127.0.0.1:3000';
+const DELAY_BETWEEN_MINTS_MS = 12000; 
+
+
 const MAX_RETRIES_PER_FILE = 5; 
-// Tiempo de espera en milisegundos antes de reintentar un archivo fallido.
+
 const RETRY_DELAY_MS = 5000; 
 
 const LOG_FILE = './mint_log.json'; 
 
-// =================================================================
+
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -40,13 +37,7 @@ async function logProcessedFile(filename) {
     await fs.writeFile(LOG_FILE, JSON.stringify(Array.from(processed), null, 2));
 }
 
-/**
- * --- FUNCIÓN MEJORADA PARA MINTEAR CON REINTENTOS ---
- * Intenta subir y mintear un solo archivo. Si falla, reintenta varias veces.
- * @param {string} filePath - La ruta completa al archivo de imagen.
- * @param {string} filename - El nombre del archivo.
- * @returns {boolean} - true si tuvo éxito, false si falló después de todos los reintentos.
- */
+
 async function mintFileWithRetries(filePath, filename) {
     for (let attempt = 1; attempt <= MAX_RETRIES_PER_FILE; attempt++) {
         try {
@@ -63,26 +54,26 @@ async function mintFileWithRetries(filePath, filename) {
             const result = await response.json();
 
             if (!response.ok) {
-                // Si la API devuelve un error, lo lanzamos para que el catch lo maneje.
+                
                 throw new Error(result.details || result.error || `Respuesta de API no exitosa (Estado: ${response.status})`);
             }
             
-            // ¡Éxito! El servidor confirmó que el NFT está completo.
+            .
             console.log(`  ✅ ÉXITO (en el intento ${attempt}/${MAX_RETRIES_PER_FILE}): ${filename} procesado. File ID: ${result.file_id}`);
             await logProcessedFile(filename);
-            return true; // Indicamos que el minteo fue exitoso.
+            return true; 
 
         } catch (error) {
             console.error(`  ❌ FALLO (intento ${attempt}/${MAX_RETRIES_PER_FILE}) al procesar ${filename}:`, error.message);
             
             if (attempt < MAX_RETRIES_PER_FILE) {
-                // Si no es el último intento, esperamos antes de reintentar.
+                
                 console.log(`  ↪️ Reintentando en ${RETRY_DELAY_MS / 1000} segundos...`);
                 await sleep(RETRY_DELAY_MS);
             } else {
-                // Si ya se usaron todos los reintentos, nos damos por vencidos con este archivo.
+                .
                 console.error(`  🚫 FRACASO TOTAL: No se pudo procesar ${filename} después de ${MAX_RETRIES_PER_FILE} intentos. Se omitirá.`);
-                return false; // Indicamos que el minteo falló definitivamente.
+                return false; 
             }
         }
     }
@@ -125,19 +116,18 @@ async function main() {
 
             console.log(`\n--- Procesando [${i + 1}/${imageFilesToProcess.length}]: ${filename} ---`);
             
-            // --- LÓGICA DE MINTEO MEJORADA ---
-            // Llamamos a la nueva función que maneja los reintentos internamente.
+            
             const wasSuccessful = await mintFileWithRetries(filePath, filename);
 
             if (wasSuccessful) {
                 successCount++;
             } else {
                 errorCount++;
-                // Opcional: Podrías crear un archivo de log para los errores si lo necesitas.
-                // await fs.appendFile('./mint_errors.log', `${new Date().toISOString()}: ${filename}\n`);
+                
+                
             }
             
-            // Pausa entre el procesamiento de diferentes archivos para no saturar el servidor.
+            
             if (i < imageFilesToProcess.length - 1) {
                 await sleep(DELAY_BETWEEN_MINTS_MS);
             }
