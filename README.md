@@ -83,5 +83,8 @@ If you have any questions or improvements, feel free to open an issue or pull re
 *   **Copyright:** The platform is a decentralized tool. Users are solely responsible for ensuring they have the legal rights to the content they mint and trade. We do not police content but will cooperate with lawful copyright takedown requests where technically feasible.
 *   **Dispute Resolution:** Due to the P2P nature of the marketplace, all transactions are final. There is no central authority to reverse transactions or resolve disputes. Please trade carefully and only with peers you trust.
 
+AFTER install HyperNFTmarket wait until full sync your node
+https://youtu.be/sSlj_5cwNF4
+
 Thanks for checking it out!
 
